@@ -36,6 +36,20 @@
     min-height: 100vh;
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: background 0.1s ease;
+  }
+
+  /* Double White Flash Effect on Timer Completion */
+  body.flash-active {
+    animation: doubleFlash 0.8s ease-in-out;
+  }
+
+  @keyframes doubleFlash {
+    0% { background: #ffffff; }
+    25% { background: radial-gradient(circle at 80% 20%, #103347 0%, #081b26 50%, #030b10 100%); }
+    50% { background: #ffffff; }
+    75% { background: radial-gradient(circle at 80% 20%, #103347 0%, #081b26 50%, #030b10 100%); }
+    100% { background: radial-gradient(circle at 80% 20%, #103347 0%, #081b26 50%, #030b10 100%); }
   }
 
   .title-header {
@@ -125,6 +139,7 @@
   function startTimer(seconds) {
     initAudio();
     clearInterval(timerInterval);
+    document.body.classList.remove('flash-active');
 
     let remainingSeconds = seconds;
     updateDisplay(remainingSeconds);
@@ -135,7 +150,7 @@
 
       if (remainingSeconds <= 0) {
         clearInterval(timerInterval);
-        playLoudDoubleBeep();
+        triggerCompletionAlert();
       }
     }, 1000);
   }
@@ -148,29 +163,41 @@
     document.getElementById('display').textContent = `${formattedMins}:${formattedSecs}`;
   }
 
-  function playLoudDoubleBeep() {
+  function triggerCompletionAlert() {
+    // 1. Trigger double white screen flash
+    document.body.classList.remove('flash-active');
+    void document.body.offsetWidth; // Force CSS reflow to restart animation
+    document.body.classList.add('flash-active');
+
+    // 2. Play 3-part futuristic synth chime
+    playFuturisticTripleChime();
+  }
+
+  function playFuturisticTripleChime() {
     if (!audioCtx) return;
 
-    const playBeep = (time) => {
+    const playPulse = (startTime, startFreq, endFreq) => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1000, time);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(startFreq, startTime);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + 0.12);
 
-      gain.gain.setValueAtTime(1.0, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+      gain.gain.setValueAtTime(0.8, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
 
-      osc.start(time);
-      osc.stop(time + 0.15);
+      osc.start(startTime);
+      osc.stop(startTime + 0.15);
     };
 
     const now = audioCtx.currentTime;
-    playBeep(now);
-    playBeep(now + 0.25);
+    playPulse(now, 600, 1200);         // 1st upward pitch sweep
+    playPulse(now + 0.18, 900, 1800);   // 2nd higher sweep
+    playPulse(now + 0.36, 1200, 2400);  // 3rd highest climax sweep
   }
 </script>
 
