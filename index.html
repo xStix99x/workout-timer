@@ -169,35 +169,35 @@
     void document.body.offsetWidth; // Force CSS reflow to restart animation
     document.body.classList.add('flash-active');
 
-    // 2. Play 3-part futuristic synth chime
-    playFuturisticTripleChime();
+    // 2. Play Sound 8 (Retro Game Stinger)
+    playRetroStinger();
   }
 
-  function playFuturisticTripleChime() {
+  function playRetroStinger() {
     if (!audioCtx) return;
 
-    const playPulse = (startTime, startFreq, endFreq) => {
+    const playTone = (time, freq, duration, type = 'square', vol = 0.8) => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(startFreq, startTime);
-      osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + 0.12);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, time);
 
-      gain.gain.setValueAtTime(0.8, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
 
-      osc.start(startTime);
-      osc.stop(startTime + 0.15);
+      osc.start(time);
+      osc.stop(time + duration);
     };
 
     const now = audioCtx.currentTime;
-    playPulse(now, 600, 1200);         // 1st upward pitch sweep
-    playPulse(now + 0.18, 900, 1800);   // 2nd higher sweep
-    playPulse(now + 0.36, 1200, 2400);  // 3rd highest climax sweep
+    playTone(now, 523.25, 0.1, 'square');      // C5
+    playTone(now + 0.1, 659.25, 0.1, 'square');  // E5
+    playTone(now + 0.2, 783.99, 0.1, 'square');  // G5
+    playTone(now + 0.3, 1046.50, 0.25, 'square');// C6
   }
 </script>
 
